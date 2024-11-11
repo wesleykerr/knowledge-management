@@ -1,0 +1,87 @@
+body {
+    width: 300px;
+    padding: 16px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    margin: 0;
+    background-color: white;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.button {
+    background-color: #2563eb;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    width: 100%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.button:hover {
+    background-color: #1d4ed8;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+
+.button:active {
+    background-color: #1e40af;
+    transform: translateY(0);
+}
+
+.button:disabled {
+    background-color: #93c5fd;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.button svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+#status {
+    font-size: 14px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    display: none;
+    text-align: center;
+}
+
+.success {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.error {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.processing {
+    background-color: #e0f2fe;
+    color: #075985;
+}
+
+.spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}

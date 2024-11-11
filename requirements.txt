@@ -1,0 +1,15 @@
+absl-py
+anthropic
+beautifulsoup4==4.12.2
+black==23.12.0
+click==8.1.7
+flask
+flask-cors
+isort==5.13.2
+langchain
+peewee==3.17.0
+pydantic
+openai
+readabilipy==0.2.0
+replicate
+tiktoken
