@@ -1,28 +1,19 @@
 ---
-title: {{title}}
-url: {{url}}
-authors: {{authors|join(', ')}}
-date: {{published}}
-tags: {{tags|join(' ')}}
-arxiv_id: {{arxiv_id}}
-categories: {{categories|join(', ')}}
-type: paper-notes
+read: false
+added-date: {{today}}
+read-date: ""
+priority: 1
+arxiv-url: {{arxiv_url}}
+pdf: "[[{{arxiv_id}}.pdf]]"
+tags:
+{{tags}}
 ---
 
 # {{title}}
 
-## Metadata
-- **Authors**: {{authors|join(', ')}}
-- **Published**: {{published}}
-- **arXiv ID**: {{arxiv_id}}
-- **Categories**: {{categories|join(', ')}}
-- **URL**: {{url}}
-
-## Summary
-{{summary}}
+## Abstract
+{{abstract}}
 
 ## Notes
--
 
-## References
-- [arXiv]({{url}})
+

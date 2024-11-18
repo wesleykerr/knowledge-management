@@ -13,3 +13,6 @@ Next steps:
 - [x] We need to add in better error handling.
 - [ ] We need to create a view in Obsidian that keeps track of the most recent articles.
 - [ ] We need to process PDFs similarly or with some path through paperpile.
+- [ ] Website to markdown - stored as part of the knowledge base.
+- [ ] PDF to markdown - store as part of the knowledge base and the foundation for the summary.
+  - [ ] Compare summaries of the same paper from PDF vs markdown.

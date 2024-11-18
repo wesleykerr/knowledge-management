@@ -97,6 +97,7 @@ def add_bookmark():
         html_content = data.get("html_content")
 
         try:
+            # The URL-specific logic should be handled within bookmark_processor.bookmark
             markdown = bookmark_processor.bookmark(url, html_content=html_content)
             logger.info("Successfully processed bookmark")
             return jsonify({"markdown": markdown})

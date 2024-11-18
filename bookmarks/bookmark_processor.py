@@ -1,5 +1,7 @@
 # Standard Library
+import datetime
 import logging
+import os
 import pathlib
 import random
 import re
@@ -7,11 +9,18 @@ import traceback
 from urllib import parse
 
 # Third Party
+import arxiv
+import jinja2
+import marker.convert
+import marker.models
 import peewee
+import PIL
+import pymupdf4llm
 import readabilipy
 import requests
 
 # Project
+from bookmarks import constants
 from bookmarks import models
 from bookmarks import processors
 from bookmarks.utils import llm
@@ -164,6 +173,95 @@ def process_bookmark(bookmark: models.Bookmark):
 
 
 def bookmark(url, html_content=None) -> str:
+    if is_arxiv_url(url):
+        return process_arxiv_url(url, html_content)
+    return process_generic_url(url, html_content)
+
+
+def is_arxiv_url(url: str) -> bool:
+    return "arxiv.org" in url.lower()
+
+
+def process_arxiv_url(url: str, html_content: str = None) -> str:
+    arxiv_id = extract_arxiv_id(url)
+    client = arxiv.Client()
+
+    search = arxiv.Search(id_list=[arxiv_id])
+    results = client.results(search)
+    paper = next(results)
+
+    arxiv_id = paper.entry_id.split("/")[-1]
+    paper.download_pdf(dirpath=constants.RESEARCH_PAPERS_PATH, filename=f"{arxiv_id}.pdf")
+    data = {
+        "title": paper.title,
+        "abstract": paper.summary,
+        "today": datetime.datetime.now(),
+        "arxiv_url": url,
+        "arxiv_id": arxiv_id,
+    }
+    env = jinja2.Environment(loader=jinja2.FileSystemLoader("templates/"))
+    template = env.get_template("academic.md")
+    markdown = template.render(**data)
+
+    safe_title = paper.title.replace(":", "-")
+    # safe_title = sanitize_filename(paper.title)
+    note_path = pathlib.Path(constants.RESEARCH_NOTES_PATH, f"{safe_title}.md")
+    note_path.parent.mkdir(parents=True, exist_ok=True)
+    note_path.write_text(markdown)
+
+    # Convert PDF to Markdown and store in Obsidian
+    # convert_pdf_to_markdown_pymudf(arxiv_id)
+    convert_pdf_to_markdown_marker(arxiv_id)
+    # save the
+
+
+def convert_pdf_to_markdown_pymudf(arxiv_id: str) -> None:
+    pdf_file = os.path.join(constants.RESEARCH_PAPERS_PATH, f"{arxiv_id}.pdf")
+    full_text = pymupdf4llm.to_markdown(pdf_file)
+
+    markdown_path = pathlib.Path(constants.RESEARCH_MARKDOWN_PATH, arxiv_id, f"{arxiv_id}.md")
+    markdown_path.parent.mkdir(parents=True, exist_ok=True)
+    markdown_path.write_text(full_text)
+
+
+def convert_pdf_to_markdown_marker(arxiv_id: str) -> None:
+    pdf_file = os.path.join(constants.RESEARCH_PAPERS_PATH, f"{arxiv_id}.pdf")
+    model_lst = marker.models.load_all_models()
+    full_text, images, out_meta = marker.convert.convert_single_pdf(pdf_file, model_lst)
+
+    markdown_path = pathlib.Path(constants.RESEARCH_MARKDOWN_PATH, arxiv_id, f"{arxiv_id}.md")
+    markdown_path.parent.mkdir(parents=True, exist_ok=True)
+    markdown_path.write_text(full_text)
+
+    save_images(images, pathlib.Path(constants.RESEARCH_MARKDOWN_PATH, arxiv_id))
+
+
+def save_images(images: dict[str, PIL.Image], output_dir: pathlib.Path) -> None:
+    """Save dictionary of images to specified directory."""
+    # Ensure output directory exists
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Save each image
+    for filename, image in images.items():
+        # Create full path and save
+        image_path = pathlib.Path(output_dir, filename)
+        image.save(str(image_path))
+
+
+def extract_arxiv_id(url: str) -> str:
+    # Handle both new and old style arxiv URLs
+    patterns = [
+        r"arxiv\.org/abs/(\d+\.\d+)",
+        r"arxiv\.org/pdf/(\d+\.\d+)",
+    ]
+
+    for pattern in patterns:
+        if match := re.search(pattern, url):
+            return match.group(1)
+    raise ValueError(f"Could not extract arXiv ID from URL: {url}")
+
+
+def process_generic_url(url: str, html_content: str = None) -> str:
     url_hash = llm.get_url_hash(url)
     try:
         bookmark = models.Bookmark.create(url_hash=url_hash, url=url, title="", status=0)
