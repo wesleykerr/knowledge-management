@@ -16,3 +16,7 @@ Next steps:
 - [ ] Website to markdown - stored as part of the knowledge base.
 - [ ] PDF to markdown - store as part of the knowledge base and the foundation for the summary.
   - [ ] Compare summaries of the same paper from PDF vs markdown.
+
+
+```
+sudo apt-get install chromium-browser chromium-chromedriver

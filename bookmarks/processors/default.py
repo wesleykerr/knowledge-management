@@ -11,7 +11,6 @@ import pydantic
 import tiktoken
 
 # Project
-from bookmarks import models
 from bookmarks.processors import base
 from bookmarks.utils import llm
 
@@ -124,7 +123,7 @@ class DefaultProcessor(base.BaseProcessor):
         return {}
 
     def generate_markdown(
-        self, bookmark: models.Bookmark, content: str, metadata: Dict[str, str]
+        self, url: str, url_hash: str, title: str, content: str, metadata: Dict[str, str]
     ) -> str:
         """Generate prompt for summarizing webpage content.
 
@@ -136,7 +135,7 @@ class DefaultProcessor(base.BaseProcessor):
             Formatted prompt string
         """
         _, output_obj = llm.call_structured_llm(
-            bookmark.url_hash, content, SYSTEM, USER, SummaryAndTags
+            url_hash, content, SYSTEM, USER, SummaryAndTags
         )
 
         # Normalize all tags
@@ -145,9 +144,9 @@ class DefaultProcessor(base.BaseProcessor):
         data = {
             "tags": "\n".join([f" - {tag}" for tag in normalized_tags]),
             "date_time": datetime.datetime.today().strftime("%Y-%m-%dT%H:%M"),
-            "url": bookmark.url,
-            "url_hash": bookmark.url_hash,
-            "title": bookmark.title,
+            "url": url,
+            "url_hash": url_hash,
+            "title": title,
             "summary": output_obj.summary,
             "key_points": "\n".join(f"* {point}" for point in output_obj.key_points),
         }

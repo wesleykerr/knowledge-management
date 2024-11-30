@@ -11,7 +11,10 @@ langchain
 marker-pdf
 peewee==3.17.0
 pydantic
+pymupdf4llm
 openai
 readabilipy==0.2.0
 replicate
+selenium
 tiktoken
+tweepy

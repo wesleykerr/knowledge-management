@@ -83,10 +83,11 @@ def add_bookmark():
         return handle_preflight()
 
     try:
-        logger.info(f"Received request: {request.headers}")
         data = request.get_json()
         logger.info(
-            f"Request data: URL={data.get('url')}, HTML Content Length={len(data.get('html_content', ''))}"
+            f"Request data: URL={data.get('url')}, "
+            f"HTML Content Length={len(data.get('html_content', ''))}, "
+            f"Screenshot Length={len(data.get('screenshot', ''))}"
         )
 
         if not data or "url" not in data:
@@ -95,10 +96,15 @@ def add_bookmark():
 
         url = data["url"]
         html_content = data.get("html_content")
+        screenshot = data.get("screenshot")  # This will be a base64 encoded PNG
 
         try:
-            # The URL-specific logic should be handled within bookmark_processor.bookmark
-            markdown = bookmark_processor.bookmark(url, html_content=html_content)
+            # Pass the screenshot to your bookmark processor
+            markdown = bookmark_processor.bookmark(
+                url,
+                html_content=html_content,
+                screenshot=screenshot
+            )
             logger.info("Successfully processed bookmark")
             return jsonify({"markdown": markdown})
         except Exception as e:
@@ -129,4 +135,4 @@ def after_request(response):
 
 if __name__ == "__main__":
     logger.info("Starting Flask server...")
-    app.run(port=5001, debug=True)
+    app.run(port=5001, host="0.0.0.0", debug=True)
