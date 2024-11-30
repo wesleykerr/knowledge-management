@@ -74,11 +74,11 @@ class Error(BaseModel):
 
 class Summary(BaseModel):
     url_hash = peewee.CharField(max_length=256, primary_key=True)
-    url = peewee.TextField()
-    summary = peewee.TextField()
-    tags = ListField()
-    markdown = peewee.TextField()
-    filename = peewee.TextField()
+    url = peewee.TextField(null=True)
+    summary = peewee.TextField(null=True)
+    tags = ListField(null=True)
+    markdown = peewee.TextField(null=True)
+    filename = peewee.TextField(null=True)
 
 
 class AuditAPI(BaseModel):

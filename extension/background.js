@@ -17,7 +17,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     const title = tab.title;
 
     try {
-      const response = await fetch('http://localhost:5001/api/bookmark', {
+      const response = await fetch('http://192.168.86.100:5001/api/bookmark', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -57,15 +57,19 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === "processBookmark") {
         // Get the active tab
-        chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+        chrome.tabs.query({active: true, currentWindow: true}, async function(tabs) {
             const activeTab = tabs[0];
+
+            // Capture screenshot
+            const screenshot = await chrome.tabs.captureVisibleTab(null, {format: 'png'});
+
             // Inject content script to get HTML
             chrome.scripting.executeScript({
                 target: {tabId: activeTab.id},
                 function: getPageContent
             }, (results) => {
                 const htmlContent = results[0].result;
-                sendToAPI(activeTab.url, htmlContent);
+                sendToAPI(activeTab.url, htmlContent, screenshot);
             });
         });
     }
@@ -89,7 +93,7 @@ async function setApiKey(apiKey) {
 }
 
 // Modified sendToAPI function
-async function sendToAPI(url, htmlContent) {
+async function sendToAPI(url, htmlContent, screenshot) {
     const apiKey = await getApiKey();
     if (!apiKey) {
         throw new Error('API key not configured');
@@ -98,10 +102,11 @@ async function sendToAPI(url, htmlContent) {
     try {
         console.log('Sending request to API:', {
             url: url,
-            htmlContentLength: htmlContent?.length
+            htmlContentLength: htmlContent?.length,
+            screenshotLength: screenshot?.length
         });
 
-        const response = await fetch('http://localhost:5001/api/bookmark', {
+        const response = await fetch('http://192.168.86.100:5001/api/bookmark', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -112,7 +117,8 @@ async function sendToAPI(url, htmlContent) {
             credentials: 'omit',
             body: JSON.stringify({
                 url: url,
-                html_content: htmlContent
+                html_content: htmlContent,
+                screenshot: screenshot
             })
         });
 
