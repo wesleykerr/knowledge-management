@@ -17,7 +17,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     const title = tab.title;
 
     try {
-      const response = await fetch('http://192.168.86.100:5001/api/bookmark', {
+      const response = await fetch('http://172.245.131.124:5001/api/bookmark', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -106,7 +106,7 @@ async function sendToAPI(url, htmlContent, screenshot) {
             screenshotLength: screenshot?.length
         });
 
-        const response = await fetch('http://192.168.86.100:5001/api/bookmark', {
+        const response = await fetch('http://172.245.131.124:5001/api/bookmark', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
