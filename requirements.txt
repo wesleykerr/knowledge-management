@@ -8,6 +8,7 @@ flask
 flask-cors
 isort==5.13.2
 langchain
+markdownify
 marker-pdf
 peewee==3.17.0
 pydantic

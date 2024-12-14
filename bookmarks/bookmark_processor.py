@@ -1,18 +1,21 @@
 # Standard Library
 import datetime
+import json
 import logging
 import os
 import pathlib
 import random
 import re
+import time
 import traceback
 from urllib import parse
-import json
-import time
+from urllib.parse import unquote
+from urllib.parse import urlparse
 
 # Third Party
 import arxiv
 import jinja2
+import markdownify
 import marker.convert
 import marker.models
 import peewee
@@ -22,12 +25,11 @@ import readabilipy
 import requests
 import tweepy
 from bs4 import BeautifulSoup
-from urllib.parse import urlparse, unquote
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 
 # Project
 from bookmarks import constants
@@ -51,6 +53,7 @@ USER_AGENTS = [
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15"
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15"
 ]
+
 
 def sanitize_filename(title: str) -> str:
     """Convert title to a clean filename without spaces or punctuation."""
@@ -87,7 +90,7 @@ def write_markdown(
     return file_path
 
 
-def get_webpage(url_hash: str, url : str, html_content: str = None) -> str:
+def get_webpage(url_hash: str, url: str, html_content: str = None) -> str:
     os.makedirs(constants.WEB_PAGE_PATH, exist_ok=True)
 
     html_path = os.path.join(constants.WEB_PAGE_PATH, f"{url_hash}.html")
@@ -151,72 +154,26 @@ def get_readability(url_hash, html_content) -> str:
     return content_obj
 
 
-def get_webpage_backup(url_hash, url):
-    try:
-        webpage = models.WebPage.get(models.WebPage.url_hash == url_hash)
-        return webpage.content
-    except peewee.DoesNotExist:
-        pass
-
-    logger.info(f"url_hash: {url_hash} url: {url}")
-    headers = {"User-Agent": random.choice(USER_AGENTS)}
-    response = requests.get(url, headers=headers)
-    if response.status_code == 200:
-        content = response.text
-
-        webpage = models.WebPage.create(url_hash=url_hash, url=url, content=content)
-        webpage.save()
-
-        return content
-    elif response.status_code == 403:
-        raise ValueError(f"Status=403 {url}")
-    elif response.status_code == 404:
-        raise ValueError(f"URL Missing: {url}")
-    elif response.status_code == 500:
-        raise ValueError(f"Service problem: {url}")
-    else:
-        logger.error(f"StatusCode: {response.status_code} URL: {url}")
-        raise ValueError(f"StatusCode: {response.status_code} URL: {url}")
-
-
-def get_readability_backup(url_hash, url, html_content) -> models.ReadabilityPage:
-    try:
-        readability = models.ReadabilityPage.get(models.ReadabilityPage.url_hash == url_hash)
-        return readability
-    except peewee.DoesNotExist:
-        pass
-
-    logger.info("HTML Content Length: %s", len(html_content))
-    content_obj = readabilipy.simple_json_from_html_string(html_content, use_readability=True)
-    content = content_obj["plain_content"]
-    if content is None:
-        raise ValueError("No content")
-
-    readability = models.ReadabilityPage.create(url_hash=url_hash, url=url, content=content_obj)
-    readability.save()
-
-    html_content = readabilipy.simple_tree_from_html_string(html_content)
-    readability_html = models.ReadabilityHTMLPage.create(
-        url_hash=url_hash, url=url, content=html_content
-    )
-    readability_html.save()
-    return readability
-
-
 def process_bookmark(url: str, html_content: str = None):
     os.makedirs(constants.WEB_SUMMARY_PATH, exist_ok=True)
-
+    os.makedirs(constants.WEB_MARKDOWN_PATH, exist_ok=True)
     url_hash = llm.get_url_hash(url)
 
     html_content = get_webpage(url_hash, url, html_content)
+    markdown_content = markdownify.markdownify(html_content)
+    with open(os.path.join(constants.WEB_MARKDOWN_PATH, f"{url_hash}.md"), "w") as f:
+        f.write(markdown_content)
+
     readability = get_readability(url_hash, html_content)
     print(readability.keys())
 
     processor = processors.get_processor(url)
-    markdown = processor.generate_markdown(url, url_hash, readability['title'], readability['plain_content'], {})
+    markdown = processor.generate_markdown(
+        url, url_hash, readability["title"], readability["plain_content"], {}
+    )
 
     # Write the file
-    title = readability['title']
+    title = readability["title"]
     base_name = sanitize_filename(title[:50])  # Limit length to 50 chars
 
     # Add unique suffix (last 4 chars of hash)
@@ -227,8 +184,6 @@ def process_bookmark(url: str, html_content: str = None):
     with open(file_path, "w") as f:
         f.write(markdown)
     logger.info(f"Wrote markdown to {file_path}")
-
-
 
 
 def bookmark(url, html_content=None, screenshot=None) -> str:
@@ -390,25 +345,29 @@ def process_twitter_url(url: str, html_content: str = None, screenshot_data: str
         screenshot_filename = None
         if screenshot_data:
             # Remove the data URL prefix if present
-            if screenshot_data.startswith('data:image/png;base64,'):
-                screenshot_data = screenshot_data.split(',')[1]
+            if screenshot_data.startswith("data:image/png;base64,"):
+                screenshot_data = screenshot_data.split(",")[1]
 
             # Decode base64 data
+            # Standard Library
             import base64
+
             screenshot_bytes = base64.b64decode(screenshot_data)
 
-            screenshot_path = pathlib.Path(constants.TWITTER_MEDIA_PATH) / f"tweet_{tweet_id}_screenshot.png"
-            with open(screenshot_path, 'wb') as f:
+            screenshot_path = (
+                pathlib.Path(constants.TWITTER_MEDIA_PATH) / f"tweet_{tweet_id}_screenshot.png"
+            )
+            with open(screenshot_path, "wb") as f:
                 f.write(screenshot_bytes)
             screenshot_filename = screenshot_path.name
 
         # Parse the HTML
-        soup = BeautifulSoup(html_content, 'html.parser')
+        soup = BeautifulSoup(html_content, "html.parser")
 
         # Find the tweet content
         tweet_data = extract_tweet_data_from_html(soup, tweet_id)
         if screenshot_filename:
-            tweet_data['screenshot'] = screenshot_filename
+            tweet_data["screenshot"] = screenshot_filename
 
         # Save the processed data
         json_path = os.path.join(constants.TWITTER_JSON_PATH, f"{tweet_id}.json")
@@ -425,7 +384,7 @@ def process_twitter_url(url: str, html_content: str = None, screenshot_data: str
         markdown_path = os.path.join(constants.TWITTER_NOTES_PATH, filename)
 
         logger.info(f"Writing markdown to {markdown_path}")
-        with open(markdown_path, "w", encoding='utf-8') as f:
+        with open(markdown_path, "w", encoding="utf-8") as f:
             f.write(markdown)
 
         return markdown
@@ -434,60 +393,61 @@ def process_twitter_url(url: str, html_content: str = None, screenshot_data: str
         logger.error(f"Failed to process tweet {tweet_id}: {str(e)}")
         raise
 
+
 def extract_tweet_data_from_html(soup: BeautifulSoup, tweet_id: str) -> dict:
     """Extract tweet data from HTML."""
     # Find the main tweet article
-    tweet_article = soup.find('article', attrs={'data-testid': 'tweet'})
+    tweet_article = soup.find("article", attrs={"data-testid": "tweet"})
     if not tweet_article:
         raise ValueError("Could not find tweet content")
 
     # Get tweet text
-    text_div = tweet_article.find('div', attrs={'data-testid': 'tweetText'})
+    text_div = tweet_article.find("div", attrs={"data-testid": "tweetText"})
     tweet_text = text_div.get_text(strip=True) if text_div else ""
     logger.info(f"Found tweet text: {tweet_text}")
 
     # Get media
     media = []
-    media_container = tweet_article.find('div', attrs={'data-testid': 'tweetPhoto'})
+    media_container = tweet_article.find("div", attrs={"data-testid": "tweetPhoto"})
     if media_container:
         logger.info("Found photo container")
         # Handle images
-        images = media_container.find_all('img')
+        images = media_container.find_all("img")
         logger.info(f"Found {len(images)} images")
         for img in images:
-            if 'src' in img.attrs:
-                img_url = img['src']
+            if "src" in img.attrs:
+                img_url = img["src"]
                 logger.info(f"Found image URL: {img_url}")
                 # Filter out small thumbnails and emoji
-                if 'emoji' not in img_url and 'thumb' not in img_url:
+                if "emoji" not in img_url and "thumb" not in img_url:
                     filename = download_media(img_url, tweet_id, constants.TWITTER_MEDIA_PATH)
                     media.append(filename)
     else:
         logger.info("No photo container found")
 
     # Handle videos
-    video_container = tweet_article.find('div', attrs={'data-testid': 'videoPlayer'})
+    video_container = tweet_article.find("div", attrs={"data-testid": "videoPlayer"})
     if video_container:
         logger.info("Found video container")
         # Get video thumbnail
-        poster = video_container.find('img')
-        if poster and 'src' in poster.attrs:
-            img_url = poster['src']
+        poster = video_container.find("img")
+        if poster and "src" in poster.attrs:
+            img_url = poster["src"]
             logger.info(f"Found video thumbnail URL: {img_url}")
             filename = download_media(img_url, tweet_id, constants.TWITTER_MEDIA_PATH)
             media.append(filename)
 
         # Add video URL to the tweet data
         video_url = None
-        video_element = video_container.find('video')
-        if video_element and 'src' in video_element.attrs:
-            video_url = video_element['src']
-        elif video_container.find('a'):  # Fallback to link if direct video not found
-            video_url = video_container.find('a').get('href')
+        video_element = video_container.find("video")
+        if video_element and "src" in video_element.attrs:
+            video_url = video_element["src"]
+        elif video_container.find("a"):  # Fallback to link if direct video not found
+            video_url = video_container.find("a").get("href")
 
         if video_url:
             logger.info(f"Found video URL: {video_url}")
-            tweet_data['video_url'] = video_url
+            tweet_data["video_url"] = video_url
     else:
         logger.info("No video container found")
 
@@ -496,52 +456,62 @@ def extract_tweet_data_from_html(soup: BeautifulSoup, tweet_id: str) -> dict:
     logger.debug(tweet_article.prettify())
 
     # Get author info
-    author_link = tweet_article.find('a', attrs={'role': 'link', 'tabindex': '-1'})
+    author_link = tweet_article.find("a", attrs={"role": "link", "tabindex": "-1"})
     author = {
-        'name': author_link.get_text(strip=True) if author_link else "Unknown",
-        'username': extract_username_from_link(author_link['href']) if author_link and 'href' in author_link.attrs else "unknown"
+        "name": author_link.get_text(strip=True) if author_link else "Unknown",
+        "username": (
+            extract_username_from_link(author_link["href"])
+            if author_link and "href" in author_link.attrs
+            else "unknown"
+        ),
     }
     logger.info(f"Found author: {author}")
 
     # Get tweet date (you may need to adjust the selector based on the HTML structure)
-    time_element = soup.find('time')
-    tweet_date = time_element.get('datetime', datetime.datetime.now().strftime('%Y-%m-%d')) if time_element else datetime.datetime.now().strftime('%Y-%m-%d')
+    time_element = soup.find("time")
+    tweet_date = (
+        time_element.get("datetime", datetime.datetime.now().strftime("%Y-%m-%d"))
+        if time_element
+        else datetime.datetime.now().strftime("%Y-%m-%d")
+    )
 
     tweet_data = {
-        'id': tweet_id,
-        'url': f'https://twitter.com/{author["username"]}/status/{tweet_id}',
-        'text': tweet_text,
-        'media': media,
-        'author': author,
-        'today': datetime.datetime.now().strftime('%Y-%m-%d'),
-        'tweet_date': tweet_date
+        "id": tweet_id,
+        "url": f'https://twitter.com/{author["username"]}/status/{tweet_id}',
+        "text": tweet_text,
+        "media": media,
+        "author": author,
+        "today": datetime.datetime.now().strftime("%Y-%m-%d"),
+        "tweet_date": tweet_date,
     }
 
     logger.info(f"Final tweet data: {tweet_data}")
     return tweet_data
 
+
 def extract_username_from_link(href: str) -> str:
     """Extract username from Twitter profile link."""
-    parts = href.strip('/').split('/')
+    parts = href.strip("/").split("/")
     return parts[-1] if parts else "unknown"
+
 
 def download_media(url: str, tweet_id: str, output_dir: pathlib.Path) -> str:
     """Download media from URL and return the filename."""
     logger.info(f"Downloading media from {url}")
 
     # Extract extension from URL or default to .jpg
-    ext = pathlib.Path(url).suffix or '.jpg'
+    ext = pathlib.Path(url).suffix or ".jpg"
     filename = f"tweet_{tweet_id}_{hash(url)}{ext}"
-    output_path = output_dir / filename
+    output_path = pathlib.Path(os.path.join(output_dir, filename))
 
     logger.info(f"Saving to {output_path}")
 
     if not output_path.exists():
         try:
-            response = requests.get(url, headers={'User-Agent': random.choice(USER_AGENTS)})
+            response = requests.get(url, headers={"User-Agent": random.choice(USER_AGENTS)})
             response.raise_for_status()
 
-            with open(output_path, 'wb') as f:
+            with open(output_path, "wb") as f:
                 f.write(response.content)
             logger.info(f"Successfully downloaded media to {filename}")
         except Exception as e:
@@ -555,7 +525,7 @@ def extract_tweet_id(url: str) -> str:
     """Extract tweet ID from Twitter/X URL."""
     patterns = [
         r"(?:twitter\.com|x\.com)/\w+/status/(\d+)",
-        r"(?:twitter\.com|x\.com)/\w+/statuses/(\d+)"
+        r"(?:twitter\.com|x\.com)/\w+/statuses/(\d+)",
     ]
 
     for pattern in patterns:
@@ -580,4 +550,3 @@ def clear_twitter_cache(older_than_days: int = None):
         for path in TWITTER_RAW_PATH.glob("*.json"):
             path.unlink()
             logger.info(f"Removed cache file: {path}")
-

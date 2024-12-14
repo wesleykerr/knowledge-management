@@ -134,9 +134,7 @@ class DefaultProcessor(base.BaseProcessor):
         Returns:
             Formatted prompt string
         """
-        _, output_obj = llm.call_structured_llm(
-            url_hash, content, SYSTEM, USER, SummaryAndTags
-        )
+        _, output_obj = llm.call_structured_llm(url_hash, content, SYSTEM, USER, SummaryAndTags)
 
         # Normalize all tags
         normalized_tags = [normalize_tag(tag) for tag in output_obj.tags]
@@ -149,6 +147,9 @@ class DefaultProcessor(base.BaseProcessor):
             "title": title,
             "summary": output_obj.summary,
             "key_points": "\n".join(f"* {point}" for point in output_obj.key_points),
+            "rel_html_path": f"web-pages/{url_hash}.html",
+            "rel_readability_path": f"web-readability/{url_hash}.json",
+            "rel_markdown_path": f"web-markdown/{url_hash}.json",
         }
 
         rendered_markdown = self.template.render(data)
