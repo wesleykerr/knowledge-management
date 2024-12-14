@@ -1,0 +1,13 @@
+[Unit]
+Description=Obsidian Knowledge Base Service
+After=network.target
+
+[Service]
+User=wkerr
+Group=wkerr
+WorkingDirectory=/home/wkerr/knowledge-management
+Environment="PATH=/home/wkerr/miniconda3/envs/extension/bin/"
+ExecStart=/home/wkerr/miniconda3/envs/extension/bin/gunicorn --workers 3 --bind 0.0.0.0:5001 api_server:app
+
+[Install]
+WantedBy=multi-user.target
