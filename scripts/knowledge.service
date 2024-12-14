@@ -6,7 +6,8 @@ After=network.target
 User=wkerr
 Group=wkerr
 WorkingDirectory=/home/wkerr/knowledge-management
-Environment="PATH=/home/wkerr/miniconda3/envs/extension/bin/"
+EnvironmentFile=/home/wkerr/knowledge-management/.env
+Environment="PATH=/home/wkerr/miniconda3/envs/extension/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin"
 ExecStart=/home/wkerr/miniconda3/envs/extension/bin/gunicorn --workers 3 --bind 0.0.0.0:5001 api_server:app
 
 [Install]
