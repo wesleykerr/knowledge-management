@@ -42,6 +42,9 @@ def process_file(file_path: str):
     elif twitter.is_twitter_url(data["url"]):
         print("twitter")
         twitter.process_twitter_url(data["url"], data["html_content"], data["screenshot"])
+    elif youtube.is_youtube_url(data["url"]):
+        print("youtube")
+        youtube.process_youtube_url(data["url"], data["html_content"])
     else:
         default.process_url(data["url"], data["html_content"])
     # TODO(wkerr): When we sucessfully process the file, we should delete it.
@@ -74,6 +77,17 @@ class FileChangeHandler(events.FileSystemEventHandler):
             logging.info(f"Valid file modified: {event.src_path}")
 
 
+def process_existing_files(directory: Path, prefix: str):
+    """Process any existing files in the directory that match our prefix."""
+    logging.info(f"Processing existing files in {directory}")
+    for file_path in directory.glob(f"{prefix}*.json"):
+        try:
+            logging.info(f"Processing existing file: {file_path}")
+            process_file(str(file_path))
+        except Exception as e:
+            logging.error(f"Error processing existing file {file_path}: {e}")
+
+
 class DirectoryListener:
     def __init__(self, path_to_watch: Path, prefix: str):
         self.path_to_watch = path_to_watch
@@ -85,6 +99,10 @@ class DirectoryListener:
             if not self.path_to_watch.exists():
                 self.path_to_watch.mkdir(parents=True)
 
+            # Process existing files before starting the watch
+            process_existing_files(self.path_to_watch, self.prefix)
+
+            # Set up the file watcher
             event_handler = FileChangeHandler(self.prefix)
             self.observer.schedule(event_handler, str(self.path_to_watch), recursive=False)
             self.observer.start()

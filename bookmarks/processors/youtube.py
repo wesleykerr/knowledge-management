@@ -23,7 +23,7 @@ from googleapiclient.errors import HttpError
 from bookmarks import constants
 from bookmarks import models
 from bookmarks.processors import base
-from bookmarks.utils import llm
+from bookmarks.utils.urls import llm
 
 
 class VideoType(str, enum.Enum):
@@ -75,6 +75,8 @@ class ExpectedOutput(pydantic.BaseModel):
     class Config:
         extra = "forbid"
 
+def is_youtube_url(url: str) -> bool:
+    return "youtube.com" in url.lower()
 
 def extract_video_id(url: str) -> str:
     print("Extracting video ID from URL:", url)
