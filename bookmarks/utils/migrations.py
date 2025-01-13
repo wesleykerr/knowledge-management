@@ -66,10 +66,15 @@ def migration_1_0_2(db):
 
 @audit_migration
 def migration_1_0_1(db):
-    migrator = SchemaMigrator(db)
-    migrate_fn(
-        migrator.add_column("summary", "filename", peewee.TextField(null=True)),
-    )
+    try:
+        migrator = SchemaMigrator(db)
+        migrate_fn(
+            migrator.add_column("summary", "filename", peewee.TextField(null=True)),
+        )
+    except peewee.OperationalError as op_error:
+        if "duplicate column name: filename" in str(op_error):
+            return
+        raise op_error
 
 
 @audit_migration

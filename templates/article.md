@@ -1,16 +1,15 @@
 ---
+added-date: {{today}}
+published-date: {{published_date}}
+read-date: ""
 url: {{url}}
+url_hash: {{url_hash}}
+markdown: "[[{{output_path}}/{{url_hash}}/article.md]]"
+html: "[[{{output_path}}/{{url_hash}}/raw.html]]"
+read: false
 tags:
 {{tags}}
-date: {{date_time}}
-bookmark_date: {{add_date}}
-url_hash: {{url_hash}}
-read: false
 ---
-
-- [[{{rel_html_path}}|Cached HTML]]
-- [[{{rel_markdown_path}}|Cached Markdown]]
-- [[{{rel_readability_path}}|Cached Readability]]
 
 [{{title}}]({{url}})
 
@@ -21,4 +20,9 @@ read: false
 ### Key Points
 
 {{key_points}}
+
+## Notes
+
+
+## Related Documents
 

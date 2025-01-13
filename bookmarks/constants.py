@@ -2,7 +2,7 @@
 import os
 import pathlib
 
-KNOWLEDGE_BASE_PATH = "/home/wkerr/sync/Obsidian/wkerr-kg"
+KNOWLEDGE_BASE_PATH = "data/wkerr-kg"
 RESEARCH_PAPERS_PATH = os.path.join(KNOWLEDGE_BASE_PATH, "research-papers")
 RESEARCH_MARKDOWN_PATH = os.path.join(KNOWLEDGE_BASE_PATH, "research-md")
 RESEARCH_NOTES_PATH = os.path.join(KNOWLEDGE_BASE_PATH, "research-notes")
@@ -20,3 +20,27 @@ WEB_MARKDOWN_PATH = os.path.join(KNOWLEDGE_BASE_PATH, "web-markdown")
 WEB_READABILITY_PATH = os.path.join(KNOWLEDGE_BASE_PATH, "web-readability")
 WEB_READABILITY_HTML_PATH = os.path.join(KNOWLEDGE_BASE_PATH, "web-readability-html")
 WEB_SUMMARY_PATH = os.path.join(KNOWLEDGE_BASE_PATH, "web-notes")
+
+FOLDER_STRUCTURE = [
+    "AI/DeepLearning/Architectures",
+    "AI/DeepLearning/Agents",
+    "AI/DeepLearning/GenerativeAI",
+    "AI/DeepLearning/GameAI",
+    "AI/DeepLearning/ReinforcementLearning",
+    "AI/DeepLearning/Safety",
+    "AI/DeepLearning/ExplainableAI",
+    "AI/Ethics",
+    "AI/MachineLearning/Applications",
+    "AI/MachineLearning/ClassicalAlgorithms",
+    "AI/MachineLearning/Engineering",
+    "AI/RecommenderSystems",
+    "Personal/Finance",
+    "Personal/Health",
+    "Personal/Politics",
+    "Personal/Entertainment",
+    "Professional/Productivity",
+    "Professional/SoftwareEngineering",
+    "Research/DataScience",
+    "Research/Science",
+    "Research/Technology",
+]
