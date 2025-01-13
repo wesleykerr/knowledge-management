@@ -1,3 +1,5 @@
+const API_BASE_URL = 'http://192.168.86.191:5001/api';
+
 // Listen for installation
 chrome.runtime.onInstalled.addListener(() => {
   console.log('Extension installed');
@@ -15,9 +17,10 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId === 'saveToObsidian') {
     const url = info.linkUrl || info.pageUrl;
     const title = tab.title;
+    const apiUrl = await getApiUrl();
 
     try {
-      const response = await fetch('http://172.245.131.124:5001/api/bookmark', {
+      const response = await fetch(`${apiUrl}/bookmark`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -92,9 +95,22 @@ async function setApiKey(apiKey) {
     await chrome.storage.local.set({ apiKey: apiKey });
 }
 
+// Add new function to get API URL (similar to getApiKey)
+async function getApiUrl() {
+    const result = await chrome.storage.local.get(['apiUrl']);
+    return result.apiUrl || DEFAULT_API_URL;
+}
+
+// Add function to set API URL
+async function setApiUrl(apiUrl) {
+    await chrome.storage.local.set({ apiUrl: apiUrl });
+}
+
 // Modified sendToAPI function
 async function sendToAPI(url, htmlContent, screenshot) {
     const apiKey = await getApiKey();
+    const apiUrl = await getApiUrl();
+
     if (!apiKey) {
         throw new Error('API key not configured');
     }
@@ -106,7 +122,7 @@ async function sendToAPI(url, htmlContent, screenshot) {
             screenshotLength: screenshot?.length
         });
 
-        const response = await fetch('http://172.245.131.124:5001/api/bookmark', {
+        const response = await fetch(`${apiUrl}/bookmark`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
