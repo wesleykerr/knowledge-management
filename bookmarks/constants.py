@@ -2,7 +2,7 @@
 import os
 import pathlib
 
-KNOWLEDGE_BASE_PATH = "data/wkerr-kg"
+KNOWLEDGE_BASE_PATH = "/home/wkerr/sync/Obsidian/wkerr-kg"
 RESEARCH_PAPERS_PATH = os.path.join(KNOWLEDGE_BASE_PATH, "research-papers")
 RESEARCH_MARKDOWN_PATH = os.path.join(KNOWLEDGE_BASE_PATH, "research-md")
 RESEARCH_NOTES_PATH = os.path.join(KNOWLEDGE_BASE_PATH, "research-notes")
