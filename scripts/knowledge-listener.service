@@ -1,0 +1,14 @@
+[Unit]
+Description=Obsidian Knowledge Base Listener Service
+After=network.target
+
+[Service]
+User=wkerr
+Group=wkerr
+WorkingDirectory=/home/wkerr/development/knowledge-management
+EnvironmentFile=/home/wkerr/development/knowledge-management/.env
+Environment="PATH=/home/wkerr/miniconda3/envs/py310/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin"
+ExecStart=python -m bookmarks.listener /home/wkerr/sync/Obsidian/wkerr-kg/unprocessed --create --prefix data_
+
+[Install]
+WantedBy=multi-user.target
