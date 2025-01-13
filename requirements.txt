@@ -19,3 +19,5 @@ replicate
 selenium
 tiktoken
 tweepy
+watchdog
+youtube-transcript-api

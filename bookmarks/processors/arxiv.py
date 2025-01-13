@@ -1,16 +1,108 @@
 # Standard Library
-import base64
+import datetime
+import enum
+import os
+import pathlib
 import re
 from typing import Dict
 from typing import List
 
 # Third Party
-import anthropic
-import httpx
+import arxiv
+import click
+import jinja2
+import peewee
+import PIL
+import pydantic
 from bs4 import BeautifulSoup
+from marker.converters.pdf import PdfConverter
+from marker.models import create_model_dict
+from marker.output import text_from_rendered
 
 # Project
+from bookmarks import constants
+from bookmarks import models
 from bookmarks.processors import base
+from bookmarks.utils import llm
+
+
+class DocumentType(str, enum.Enum):
+    RESEARCH_PAPER = "research_paper"
+    NEWS_ARTICLE = "news_article"
+    INDUSTRY_REPORT = "industry_report"
+    CASE_STUDY = "case_study"
+    TECHNICAL_DOCUMENT = "technical_document"
+    OPINION_PIECE = "opinion_piece"
+    SURVEY = "survey"
+    WHITEPAPER = "whitepaper"
+
+
+class SourceType(str, enum.Enum):
+    ACADEMIC = "academic"
+    INDUSTRY = "industry"
+    NEWS = "news"
+    GOVERNMENT = "government"
+
+
+class ConfidenceLevel(str, enum.Enum):
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
+
+
+class Folder(pydantic.BaseModel):
+    path: str = pydantic.Field(description="The local path to the folder")
+    reason: str = pydantic.Field(description="The reason for the folder classification")
+
+    class Config:
+        extra = "forbid"
+
+
+class PublicationInfo(pydantic.BaseModel):
+    date: str = pydantic.Field(description="The date of the publication in YYYY-MM-DD format")
+    source_type: SourceType = pydantic.Field(description="The type of source")
+    confidence_level: ConfidenceLevel = pydantic.Field(
+        description="The confidence level of the publication"
+    )
+
+    class Config:
+        extra = "forbid"
+
+
+class Metadata(pydantic.BaseModel):
+    document_type: DocumentType = pydantic.Field(description="The type of document")
+    publication_info: PublicationInfo = pydantic.Field(description="The publication information")
+
+    class Config:
+        extra = "forbid"
+
+
+class ExpectedOutput(pydantic.BaseModel):
+    folder_classification: Folder = pydantic.Field(description="The folder classification")
+    metadata: Metadata = pydantic.Field(description="The metadata")
+    summary: str = pydantic.Field(description="A summary of the text in 3-5 paragraphs.")
+    key_points: list[str] = pydantic.Field(description="Up to 5 key points")
+    tags: list[str] = pydantic.Field(description="Up to 10 tags")
+
+    class Config:
+        extra = "forbid"
+
+
+def is_arxiv_url(url: str) -> bool:
+    return "arxiv.org" in url.lower()
+
+
+def extract_arxiv_id(url: str) -> str:
+    # Handle both new and old style arxiv URLs
+    patterns = [
+        r"arxiv\.org/abs/(\d+\.\d+)",
+        r"arxiv\.org/pdf/(\d+\.\d+)",
+    ]
+
+    for pattern in patterns:
+        if match := re.search(pattern, url):
+            return match.group(1)
+    raise ValueError(f"Could not extract arXiv ID from URL: {url}")
 
 
 def extract_pdf_link(soup, arxiv_id: str = None) -> str:
@@ -33,170 +125,131 @@ def extract_pdf_link(soup, arxiv_id: str = None) -> str:
     return ""
 
 
-class ArxivProcessor(base.BaseProcessor):
-    def __init__(self):
-        super().__init__()
-        self.template = "academic"
+def save_images(images: dict[str, PIL.Image], output_dir: pathlib.Path) -> None:
+    """Save dictionary of images to specified directory."""
+    # Ensure output directory exists
+    output_dir.mkdir(parents=True, exist_ok=True)
 
-    def extract_metadata(self, html_content: str) -> Dict[str, str]:
-        soup = BeautifulSoup(html_content, "html.parser")
+    # Save each image
+    for filename, image in images.items():
+        # Create full path and save
+        image_path = pathlib.Path(output_dir, filename)
+        image.save(str(image_path))
 
-        # Extract arXiv ID from URL or page
-        arxiv_id = self._extract_arxiv_id(soup)
 
-        metadata = {
-            "authors": self._extract_authors(soup),
-            "title": self._extract_title(soup),
-            "arxiv_id": arxiv_id,
-            "published": self._extract_date(soup),
-            "abstract": self._extract_abstract(soup),
-            "pdf_url": extract_pdf_link(soup, arxiv_id),
-        }
+def convert_pdf_to_markdown_marker(arxiv_id: str) -> str:
+    pdf_file = os.path.join(constants.RESEARCH_PAPERS_PATH, f"{arxiv_id}.pdf")
+    converter = PdfConverter(artifact_dict=create_model_dict())
+    rendered = converter(pdf_file)
+    text, _, images = text_from_rendered(rendered)
 
-        return metadata
+    # model_lst = marker.models.load_all_models()
+    # full_text, images, out_meta = marker.convert.convert_single_pdf(pdf_file, model_lst)
 
-    def _extract_arxiv_id(self, soup) -> str:
-        """Extract the arXiv ID from the page.
+    markdown_path = pathlib.Path(constants.RESEARCH_MARKDOWN_PATH, arxiv_id, f"{arxiv_id}.md")
+    markdown_path.parent.mkdir(parents=True, exist_ok=True)
+    markdown_path.write_text(text)
 
-        Args:
-            soup: BeautifulSoup object of the page
+    save_images(images, pathlib.Path(constants.RESEARCH_MARKDOWN_PATH, arxiv_id))
+    return text
 
-        Returns:
-            str: The arXiv ID or empty string if not found
-        """
-        # Try meta tag first (most reliable)
-        meta_arxiv = soup.find("meta", {"name": "citation_arxiv_id"})
-        if meta_arxiv and meta_arxiv.get("content"):
-            return meta_arxiv["content"]
 
-        # Try breadcrumbs
-        breadcrumbs = soup.find("div", class_="header-breadcrumbs")
-        if breadcrumbs:
-            match = re.search(r"arXiv:(\d+\.\d+)", breadcrumbs.text)
-            if match:
-                return match.group(1)
+def create_markdown(paper: arxiv.Result, data: Dict[str, str]) -> str:
+    env = jinja2.Environment(loader=jinja2.FileSystemLoader("templates/"))
+    template = env.get_template("academic.md")
+    markdown = template.render(**data)
 
-        # Try URL path as fallback
-        abs_link = soup.find("link", {"rel": "canonical"})
-        if abs_link and abs_link.get("href"):
-            match = re.search(r"/abs/(\d+\.\d+)", abs_link["href"])
-            if match:
-                return match.group(1)
+    safe_title = paper.title.replace(":", "-")
+    # safe_title = sanitize_filename(paper.title)
+    note_path = pathlib.Path(constants.RESEARCH_NOTES_PATH, f"{safe_title}.md")
+    note_path.parent.mkdir(parents=True, exist_ok=True)
+    note_path.write_text(markdown)
 
-        return ""
 
-    def _extract_authors(self, soup) -> List[str]:
-        authors_div = soup.find("div", class_="authors")
-        if authors_div:
-            authors = [a.text.strip() for a in authors_div.find_all("a")]
-            return authors
-        return []
+def process_arxiv_url(url: str, html_content: str = None) -> str:
+    arxiv_id = extract_arxiv_id(url)
+    client = arxiv.Client()
 
-    def _extract_abstract(self, soup) -> str:
-        abstract_div = soup.find("blockquote", class_="abstract")
-        if abstract_div:
-            # Remove the "Abstract: " prefix if present
-            text = abstract_div.text.strip()
-            return re.sub(r"^Abstract:\s*", "", text)
-        return ""
+    search = arxiv.Search(id_list=[arxiv_id])
+    results = client.results(search)
+    paper = next(results)
 
-    def _extract_title(self, soup) -> str:
-        """Extract the paper title from the arXiv page.
+    arxiv_id = paper.entry_id.split("/")[-1]
 
-        Args:
-            soup: BeautifulSoup object of the page
+    # Download PDF
+    os.makedirs(constants.RESEARCH_PAPERS_PATH, exist_ok=True)
+    pdf_path = os.path.join(constants.RESEARCH_PAPERS_PATH, f"{arxiv_id}.pdf")
+    if not os.path.exists(pdf_path):
+        paper.download_pdf(dirpath=constants.RESEARCH_PAPERS_PATH, filename=f"{arxiv_id}.pdf")
 
-        Returns:
-            str: The paper title or empty string if not found
-        """
-        # Try the h1 title first (newer pages)
-        title_h1 = soup.find("h1", class_="title")
-        if title_h1:
-            # Remove "Title:" prefix if present
-            text = title_h1.text.strip()
-            return re.sub(r"^Title:\s*", "", text)
+    # Extract Markdown
+    markdown_text = convert_pdf_to_markdown_marker(arxiv_id)
 
-        # Try alternative title location (older pages)
-        title_div = soup.find("div", class_="title")
-        if title_div:
-            text = title_div.text.strip()
-            return re.sub(r"^Title:\s*", "", text)
+    # Create Metadata and Summary
 
-        return ""
+    data = {"folders": constants.FOLDER_STRUCTURE}
+    env = jinja2.Environment(loader=jinja2.FileSystemLoader("templates/"))
+    template = env.get_template("prompts/arxiv.md")
 
-    def _extract_date(self, soup) -> str:
-        """Extract the publication date from the arXiv page.
+    system = template.render(**data)
+    user = "Here is the content: {content}"
 
-        Args:
-            soup: BeautifulSoup object of the page
+    _, output_obj = llm.call_structured_llm(arxiv_id, markdown_text, system, user, ExpectedOutput)
+    print(output_obj.tags)
+    normalized_tags = [base.normalize_tag(tag) for tag in output_obj.tags]
 
-        Returns:
-            str: The publication date in YYYY-MM-DD format or empty string if not found
-        """
-        # Try to find date in meta tags first (more reliable)
-        meta_date = soup.find("meta", {"name": "citation_date"})
-        if meta_date and meta_date.get("content"):
-            return meta_date["content"]
+    # Move the PDF to the output_obj.folder_classification.path and store the new file name
+    output_dir = os.path.join(constants.KNOWLEDGE_BASE_PATH, output_obj.folder_classification.path)
+    os.makedirs(output_dir, exist_ok=True)
 
-        # Try to find date in submission history
-        history = soup.find("div", class_="submission-history")
-        if history:
-            # Look for the first submission date
-            date_match = re.search(r"\[v1\] ([A-Za-z]{3}, \d{1,2} [A-Za-z]{3} \d{4})", history.text)
-            if date_match:
-                try:
-                    # Convert to YYYY-MM-DD format
-                    # Standard Library
-                    from datetime import datetime
+    # Move the markdown folder to the output_dir and store the new file name
+    markdown_dir = os.path.join(constants.RESEARCH_MARKDOWN_PATH, arxiv_id)
+    os.rename(markdown_dir, os.path.join(output_dir, arxiv_id))
 
-                    date_str = date_match.group(1)
-                    date_obj = datetime.strptime(date_str, "%a, %d %b %Y")
-                    return date_obj.strftime("%Y-%m-%d")
-                except ValueError:
-                    pass
+    pdf_path = os.path.join(constants.RESEARCH_PAPERS_PATH, f"{arxiv_id}.pdf")
+    os.rename(pdf_path, os.path.join(output_dir, f"{arxiv_id}.pdf"))
 
-        # Try dateline div as fallback
-        dateline = soup.find("div", class_="dateline")
-        if dateline:
-            # Extract date pattern like "Submitted on 13 March 2024"
-            date_match = re.search(r"Submitted on (\d{1,2} [A-Za-z]+ \d{4})", dateline.text)
-            if date_match:
-                try:
-                    date_str = date_match.group(1)
-                    date_obj = datetime.strptime(date_str, "%d %B %Y")
-                    return date_obj.strftime("%Y-%m-%d")
-                except ValueError:
-                    pass
+    data = {
+        "title": paper.title,
+        "abstract": paper.summary,
+        "today": datetime.datetime.now(),
+        "published_date": paper.published,
+        "arxiv_url": url,
+        "arxiv_id": arxiv_id,
+        "authors": [author.name for author in paper.authors],
+        "summary": output_obj.summary,
+        "key_points": "\n".join(f"* {point}" for point in output_obj.key_points),
+        "tags": "\n".join([f" - {tag}" for tag in normalized_tags]),
+        "output_path": output_obj.folder_classification.path,
+    }
+    env = jinja2.Environment(loader=jinja2.FileSystemLoader("templates/"))
+    template = env.get_template("academic.md")
+    markdown = template.render(**data)
 
-        return ""
+    filename = base.get_filename(paper.title, llm.get_url_hash(url))
+    note_path = pathlib.Path(output_dir, f"{arxiv_id}-{filename}")
+    note_path.parent.mkdir(parents=True, exist_ok=True)
+    note_path.write_text(markdown)
 
-    def generate_markdown(self, content: str, metadata: Dict[str, str]) -> str:
-        # Use the abstract as the primary content for summarization
-        abstract = metadata.get("abstract", content)
-        authors = ", ".join(metadata.get("authors", []))
-        categories = ", ".join(metadata.get("categories", []))
 
-        return f"""Analyze this academic paper from arXiv:
-Title: {metadata.get('title', 'Unknown')}
-Authors: {authors}
-Categories: {categories}
-arXiv ID: {metadata.get('arxiv_id', 'Unknown')}
-Published: {metadata.get('published', 'Unknown')}
+@click.command()
+@click.argument("url")
+@click.option("--verbose", "-v", is_flag=True, help="Enable verbose output")
+def main(url: str, verbose: bool):
+    """Process an arXiv URL to download and organize papers."""
+    db = peewee.SqliteDatabase("data/database.db")
+    models.db.initialize(db)
 
-Abstract:
-{abstract}
+    try:
+        if verbose:
+            click.echo(f"Processing {url}...")
 
-Please provide:
-1. Key research objectives
-2. Main methodology/approach
-3. Primary findings/contributions
-4. Potential applications
-5. Technical complexity level
+        process_arxiv_url(url)
+        click.echo(f"Successfully processed {url}")
+    except Exception as e:
+        click.echo(f"Error processing URL: {e}", err=True)
+        raise
 
-Keep the summary technical but accessible to practitioners in the field.
-"""
 
-    def process_tags(self, tags: List[str]) -> List[str]:
-        # Add academic and research tags, plus any arXiv categories
-        base_tags = ["academic", "research", "arxiv"]
-        return list(set(tags + base_tags))
+if __name__ == "__main__":
+    main()

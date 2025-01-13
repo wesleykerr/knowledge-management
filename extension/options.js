@@ -1,7 +1,11 @@
 // Save options to chrome.storage
 const saveOptions = async () => {
     const apiKey = document.getElementById('apiKey').value;
-    await chrome.storage.local.set({ apiKey: apiKey });
+    const apiUrl = document.getElementById('apiUrl').value;
+    await chrome.storage.local.set({
+        apiKey: apiKey,
+        apiUrl: apiUrl
+    });
 
     // Update status to let user know options were saved
     const status = document.getElementById('status');
@@ -13,9 +17,20 @@ const saveOptions = async () => {
 
 // Restore options from chrome.storage
 const restoreOptions = async () => {
-    const result = await chrome.storage.local.get(['apiKey']);
-    document.getElementById('apiKey').value = result.apiKey || '';
+    try {
+        const result = await chrome.storage.local.get({
+            apiKey: '',
+            apiUrl: 'http://192.168.86.191:5001/api'
+        });
+        document.getElementById('apiKey').value = result.apiKey;
+        document.getElementById('apiUrl').value = result.apiUrl;
+    } catch (error) {
+        console.error('Error loading options:', error);
+    }
 };
 
-document.addEventListener('DOMContentLoaded', restoreOptions);
-document.getElementById('save').addEventListener('click', saveOptions);
+// Move event listeners inside DOMContentLoaded
+document.addEventListener('DOMContentLoaded', () => {
+    restoreOptions();
+    document.getElementById('save').addEventListener('click', saveOptions);
+});

@@ -1,4 +1,6 @@
 # Standard Library
+import hashlib
+import json
 import logging
 import os
 import traceback
@@ -13,7 +15,6 @@ from flask import request
 from flask_cors import CORS
 
 # Project
-from bookmarks import bookmark_processor
 from bookmarks import models
 from bookmarks.utils import secret_creation
 
@@ -46,6 +47,14 @@ models.db.initialize(db)
 
 # Generate a secure API key if it doesn't exist
 API_KEY = secret_creation.get_or_create_api_key()
+OUTPUT_DIR = "/home/wkerr/sync/Obsidian/wkerr-kg/unprocessed/"
+
+
+def generate_filename(url: str) -> str:
+    """Generate a filename based on the URL"""
+    # Create a hash of the URL
+    url_hash = hashlib.md5(url.encode()).hexdigest()[:8]
+    return f"data_{url_hash}.json"
 
 
 def require_api_key(f):
@@ -99,14 +108,13 @@ def add_bookmark():
         screenshot = data.get("screenshot")  # This will be a base64 encoded PNG
 
         try:
-            # Pass the screenshot to your bookmark processor
-            markdown = bookmark_processor.bookmark(
-                url,
-                html_content=html_content,
-                screenshot=screenshot
-            )
+            filename = generate_filename(url)
+            output_path = os.path.join(OUTPUT_DIR, filename)
+            with open(output_path, "w") as output_io:
+                json.dump(data, output_io)
+
             logger.info("Successfully processed bookmark")
-            return jsonify({"markdown": markdown})
+            return jsonify({"success": True})
         except Exception as e:
             logger.error("Error processing request: %s", str(e))
             logger.error("Traceback: %s", traceback.format_exc())

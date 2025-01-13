@@ -20,3 +20,27 @@ WEB_MARKDOWN_PATH = os.path.join(KNOWLEDGE_BASE_PATH, "web-markdown")
 WEB_READABILITY_PATH = os.path.join(KNOWLEDGE_BASE_PATH, "web-readability")
 WEB_READABILITY_HTML_PATH = os.path.join(KNOWLEDGE_BASE_PATH, "web-readability-html")
 WEB_SUMMARY_PATH = os.path.join(KNOWLEDGE_BASE_PATH, "web-notes")
+
+FOLDER_STRUCTURE = [
+    "AI/DeepLearning/Architectures",
+    "AI/DeepLearning/Agents",
+    "AI/DeepLearning/GenerativeAI",
+    "AI/DeepLearning/GameAI",
+    "AI/DeepLearning/ReinforcementLearning",
+    "AI/DeepLearning/Safety",
+    "AI/DeepLearning/ExplainableAI",
+    "AI/Ethics",
+    "AI/MachineLearning/Applications",
+    "AI/MachineLearning/ClassicalAlgorithms",
+    "AI/MachineLearning/Engineering",
+    "AI/RecommenderSystems",
+    "Personal/Finance",
+    "Personal/Health",
+    "Personal/Politics",
+    "Personal/Entertainment",
+    "Professional/Productivity",
+    "Professional/SoftwareEngineering",
+    "Research/DataScience",
+    "Research/Science",
+    "Research/Technology",
+]
