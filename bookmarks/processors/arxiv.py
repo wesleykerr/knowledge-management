@@ -166,7 +166,7 @@ def create_markdown(paper: arxiv.Result, data: Dict[str, str]) -> str:
     note_path.write_text(markdown)
 
 
-def process_arxiv_url(url: str, html_content: str = None) -> str:
+def process_arxiv_url(url: str, html_content: str = None, metadata: dict = dict()) -> str:
     arxiv_id = extract_arxiv_id(url)
     client = arxiv.Client()
 
@@ -212,7 +212,7 @@ def process_arxiv_url(url: str, html_content: str = None) -> str:
     data = {
         "title": paper.title,
         "abstract": paper.summary,
-        "today": datetime.datetime.now(),
+        "added_date": metadata.get("added_date", datetime.datetime.now()),
         "published_date": paper.published,
         "arxiv_url": url,
         "arxiv_id": arxiv_id,
@@ -221,6 +221,9 @@ def process_arxiv_url(url: str, html_content: str = None) -> str:
         "key_points": "\n".join(f"* {point}" for point in output_obj.key_points),
         "tags": "\n".join([f" - {tag}" for tag in normalized_tags]),
         "output_path": output_obj.folder_classification.path,
+        "read": metadata.get("read", False),
+        "read_date": metadata.get("read_date", ""),
+        "notes": metadata.get("notes", ""),
     }
     env = jinja2.Environment(loader=jinja2.FileSystemLoader("templates/"))
     template = env.get_template("academic.md")

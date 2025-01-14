@@ -1,14 +1,16 @@
 ---
 content-type: article
-added-date: {{today}}
+added-date: {{added_date}}
 published-date: {{published_date}}
-read-date: ""
+read-date: {{read_date}}
 url: {{url}}
 url_hash: {{url_hash}}
 markdown: "[[{{output_path}}/{{url_hash}}/article.md]]"
 html: "[[{{output_path}}/{{url_hash}}/raw.html]]"
-read: false
+read: {{read}}
+title: {{title}}
 tags:
+ - article
 {{tags}}
 ---
 
@@ -24,6 +26,7 @@ tags:
 
 ## Notes
 
+{{notes}}
 
 ## Related Documents
 

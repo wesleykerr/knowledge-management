@@ -9,7 +9,9 @@ url: {{arxiv_url}}
 arxiv-url: {{arxiv_url}}
 markdown: "[[{{output_path}}/{{arxiv_id}}/{{arxiv_id}}.md]]"
 pdf: "[[{{output_path}}/{{arxiv_id}}.pdf]]"
+title: {{title}}
 tags:
+ - paper
 {{tags}}
 ---
 

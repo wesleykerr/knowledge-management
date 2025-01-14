@@ -6,6 +6,7 @@ author: {{author.name}} (@{{author.username}})
 date: {{tweet_date}}
 added_date: {{today}}
 tags:
+ - tweet
 ---
 
 # Tweet by @{{author.username}}
