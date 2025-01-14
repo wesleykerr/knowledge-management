@@ -1,4 +1,5 @@
 ---
+content-type: paper
 read: false
 added-date: {{today}}
 published-date: {{published_date}}

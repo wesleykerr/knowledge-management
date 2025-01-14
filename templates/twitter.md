@@ -1,5 +1,5 @@
 ---
-type: tweet
+content-type: tweet
 tweet_id: {{id}}
 url: {{url}}
 author: {{author.name}} (@{{author.username}})

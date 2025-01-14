@@ -16,6 +16,7 @@ from bookmarks import models
 from bookmarks.processors import arxiv
 from bookmarks.processors import default
 from bookmarks.processors import twitter
+from bookmarks.processors import youtube
 
 # Configure logging
 logging.basicConfig(

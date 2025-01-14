@@ -1,4 +1,5 @@
 ---
+content-type: article
 added-date: {{today}}
 published-date: {{published_date}}
 read-date: ""

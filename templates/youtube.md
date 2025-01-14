@@ -1,4 +1,5 @@
 ---
+content-type: video
 watched: false
 added-date: {{today}}
 published-date: {{published_date}}

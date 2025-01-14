@@ -23,7 +23,7 @@ from googleapiclient.errors import HttpError
 from bookmarks import constants
 from bookmarks import models
 from bookmarks.processors import base
-from bookmarks.utils.urls import llm
+from bookmarks.utils import llm
 
 
 class VideoType(str, enum.Enum):
