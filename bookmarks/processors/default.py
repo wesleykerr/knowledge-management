@@ -178,12 +178,13 @@ def process_url(url: str, html_content: str = None) -> str:
         "url": url,
         "url_hash": url_hash,
         "title": output_obj.metadata.title,
-        "today": datetime.datetime.now(),
+        "added_date": datetime.datetime.now(),
         "published_date": output_obj.metadata.publication_info.date,
         "summary": output_obj.summary,
         "key_points": "\n".join(f"* {point}" for point in output_obj.key_points),
         "tags": "\n".join([f" - {tag}" for tag in normalized_tags]),
         "output_path": output_obj.folder_classification.path,
+        "read_date": "",
     }
     env = jinja2.Environment(loader=jinja2.FileSystemLoader("templates/"))
     template = env.get_template("article.md")

@@ -1,15 +1,15 @@
 ---
 content-type: paper
-read: false
-added-date: {{today}}
+read: {{read}}
+added-date: {{added_date}}
 published-date: {{published_date}}
-read-date: ""
+read-date: {{read_date}}
 priority: 1
 url: {{arxiv_url}}
 arxiv-url: {{arxiv_url}}
 markdown: "[[{{output_path}}/{{arxiv_id}}/{{arxiv_id}}.md]]"
 pdf: "[[{{output_path}}/{{arxiv_id}}.pdf]]"
-title: {{title}}
+title: "{{title}}"
 tags:
  - paper
 {{tags}}

@@ -7,8 +7,8 @@ url: {{url}}
 url_hash: {{url_hash}}
 markdown: "[[{{output_path}}/{{url_hash}}/article.md]]"
 html: "[[{{output_path}}/{{url_hash}}/raw.html]]"
-read: {{read}}
-title: {{title}}
+read: false
+title: "{{title}}"
 tags:
  - article
 {{tags}}
