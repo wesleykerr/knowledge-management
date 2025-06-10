@@ -8,7 +8,7 @@ Group=wkerr
 WorkingDirectory=/home/wkerr/development/knowledge-management
 EnvironmentFile=/home/wkerr/development/knowledge-management/.env
 Environment="PATH=/home/wkerr/miniconda3/envs/py310/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin"
-ExecStart=/home/wkerr/miniconda3/envs/py310/bin/python -m bookmarks.listener /home/wkerr/sync/Obsidian/wkerr-kg/unprocessed --create --prefix data_
+ExecStart=/home/wkerr/.local/bin/uv run -m bookmarks.listener /home/wkerr/sync/Obsidian/wkerr-kg/unprocessed --create --prefix data_
 
 [Install]
 WantedBy=multi-user.target

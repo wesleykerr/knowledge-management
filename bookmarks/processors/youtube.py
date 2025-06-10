@@ -3,9 +3,7 @@ import datetime
 import enum
 import os
 import pathlib
-import re
-from typing import Dict
-from typing import List
+import typing
 from urllib.parse import parse_qs
 from urllib.parse import urlparse
 
@@ -15,7 +13,6 @@ import jinja2
 import peewee
 import pydantic
 import youtube_transcript_api as yta
-from bs4 import BeautifulSoup
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
@@ -75,8 +72,10 @@ class ExpectedOutput(pydantic.BaseModel):
     class Config:
         extra = "forbid"
 
+
 def is_youtube_url(url: str) -> bool:
     return "youtube.com" in url.lower()
+
 
 def extract_video_id(url: str) -> str:
     print("Extracting video ID from URL:", url)
@@ -86,11 +85,15 @@ def extract_video_id(url: str) -> str:
 
 
 def get_transcript(video_id: str) -> str:
-    transcript = yta.YouTubeTranscriptApi.get_transcript(video_id)
-    return "\n".join([t["text"] for t in transcript])
+    try:
+        transcript = yta.YouTubeTranscriptApi.get_transcript(video_id)
+        return "\n".join([t["text"] for t in transcript])
+    except Exception as e:
+        print(f"Error getting transcript: {e}")
+        return ""
 
 
-def get_video_metadata(video_id: str) -> Dict[str, str]:
+def get_video_metadata(video_id: str) -> typing.Dict[str, str]:
     """Fetch video metadata using YouTube Data API v3."""
     print("Getting video metadata using YouTube API video_id:", video_id)
 
@@ -143,10 +146,10 @@ def process_youtube_url(url: str, html_content: str = None) -> str:
     user = "Here is the content: {content}"
 
     # Combine metadata and transcript for LLM input
-    content = f"""Title: {metadata['title']}
-Channel: {metadata['channel']}
-Published: {metadata['published_date']}
-Description: {metadata['description']}
+    content = f"""Title: {metadata["title"]}
+Channel: {metadata["channel"]}
+Published: {metadata["published_date"]}
+Description: {metadata["description"]}
 
 Transcript:
 {transcript}"""
@@ -189,7 +192,7 @@ def main(url: str):
     try:
         with open("data/youtube.html", "r") as input_io:
             html_content = input_io.read()
-        transcript = process_youtube_url(url, html_content)
+        _ = process_youtube_url(url, html_content)
         # click.echo(transcript)
     except Exception as e:
         click.echo(f"Error processing URL: {str(e)}", err=True)

@@ -1,11 +1,42 @@
-[tool.isort]
-conda_env = "extension"
-profile = "black"
-import_heading_stdlib = "Standard Library"
-import_heading_thirdparty = "Third Party"
-import_heading_firstparty = "Project"
-force_single_line = true
-line_length = 100
+[project]
+name = "perpetua"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "absl-py>=2.3.0",
+    "arxiv>=2.2.0",
+    "beautifulsoup4>=4.13.4",
+    "click>=8.2.1",
+    "fastapi>=0.115.12",
+    "flask>=3.1.1",
+    "flask-cors>=6.0.0",
+    "google-api-python-client>=2.171.0",
+    "langchain>=0.3.25",
+    "marker-pdf[full]==1.7.4",
+    "openai>=1.82.1",
+    "peewee>=3.18.1",
+    "pydantic>=2.11.5",
+    "pymupdf4llm>=0.0.24",
+    "readabilipy>=0.3.0",
+    "replicate>=1.0.7",
+    "selenium>=4.33.0",
+    "sqlalchemy>=2.0.0",
+    "tiktoken>=0.9.0",
+    "tweepy>=4.15.0",
+    "uvicorn>=0.27.0",
+    "watchdog>=6.0.0",
+    "youtube-transcript-api>=1.0.3",
+]
 
-[tool.black]
+[tool.ruff]
 line-length = 100
+preview = true
+fix = true
+
+[tool.ruff.lint]
+extend-select = ["I", "E501", "UP035", "PLC0415", "E402", "TID252"]
+
+[tool.ruff.lint.isort]
+force-single-line = true

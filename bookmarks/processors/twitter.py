@@ -15,13 +15,14 @@ from bs4 import BeautifulSoup
 
 # Project
 from bookmarks import constants
+from bookmarks.utils.urls import USER_AGENTS
 
 logger = logging.getLogger(__name__)
 
 
 def is_twitter_url(url: str) -> bool:
     """Check if URL is from Twitter/X."""
-    return any(domain in url.lower() for domain in ["twitter.com", "x.com"])
+    return any(domain in url.lower() for domain in ["twitter.com", "https://x.com"])
 
 
 def process_twitter_url(url: str, html_content: str = None, screenshot_data: str = None) -> str:
@@ -138,9 +139,6 @@ def extract_tweet_data_from_html(soup: BeautifulSoup, tweet_id: str) -> dict:
         elif video_container.find("a"):  # Fallback to link if direct video not found
             video_url = video_container.find("a").get("href")
 
-        if video_url:
-            logger.info(f"Found video URL: {video_url}")
-            tweet_data["video_url"] = video_url
     else:
         logger.info("No video container found")
 
@@ -170,13 +168,16 @@ def extract_tweet_data_from_html(soup: BeautifulSoup, tweet_id: str) -> dict:
 
     tweet_data = {
         "id": tweet_id,
-        "url": f'https://twitter.com/{author["username"]}/status/{tweet_id}',
+        "url": f"https://twitter.com/{author['username']}/status/{tweet_id}",
         "text": tweet_text,
         "media": media,
         "author": author,
         "today": datetime.datetime.now().strftime("%Y-%m-%d"),
         "tweet_date": tweet_date,
     }
+    if video_url:
+        logger.info(f"Found video URL: {video_url}")
+        tweet_data["video_url"] = video_url
 
     logger.info(f"Final tweet data: {tweet_data}")
     return tweet_data
@@ -240,6 +241,6 @@ def clear_twitter_cache(older_than_days: int = None):
                 path.unlink()
                 logger.info(f"Removed old cache file: {path}")
     else:
-        for path in TWITTER_RAW_PATH.glob("*.json"):
+        for path in constants.TWITTER_RAW_PATH.glob("*.json"):
             path.unlink()
             logger.info(f"Removed cache file: {path}")

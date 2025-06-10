@@ -1,5 +1,14 @@
 
 
+## First-time Setup
+
+* Install [uv](https://docs.astral.sh/uv/)
+
+```
+uv tool install ruff pre-commit
+uvx pre-commit install
+```
+
 Remember this command:
 
 ```
@@ -20,3 +29,4 @@ Next steps:
 
 ```
 sudo apt-get install chromium-browser chromium-chromedriver
+```
