@@ -1,0 +1,25 @@
+{
+    "[json]": {
+        "editor.defaultFormatter": "vscode.json-language-features",
+        "editor.tabSize": 2,
+        "editor.insertSpaces": true
+    },
+    "[python]": {
+        "editor.codeActionsOnSave": {
+            "source.fixAll": "explicit",
+            "source.organizeImports": "explicit"
+        },
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.formatOnSave": true
+    },
+    "editor.detectIndentation": false,
+    "editor.rulers": [
+        100
+    ],
+    "isort.args": [
+        "--settings-path",
+        "pyproject.toml"
+    ],
+    "python.languageServer": "None",
+    "ruff.fixAll": true
+}
