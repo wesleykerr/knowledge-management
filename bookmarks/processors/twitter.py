@@ -120,6 +120,7 @@ def extract_tweet_data_from_html(soup: BeautifulSoup, tweet_id: str) -> dict:
         logger.info("No photo container found")
 
     # Handle videos
+    video_url = None
     video_container = tweet_article.find("div", attrs={"data-testid": "videoPlayer"})
     if video_container:
         logger.info("Found video container")
@@ -132,7 +133,6 @@ def extract_tweet_data_from_html(soup: BeautifulSoup, tweet_id: str) -> dict:
             media.append(filename)
 
         # Add video URL to the tweet data
-        video_url = None
         video_element = video_container.find("video")
         if video_element and "src" in video_element.attrs:
             video_url = video_element["src"]
