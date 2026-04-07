@@ -6,15 +6,14 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "absl-py>=2.3.0",
-    "arxiv>=2.2.0",
+    "anthropic>=0.91.0",
     "beautifulsoup4>=4.13.4",
     "click>=8.2.1",
     "fastapi>=0.115.12",
     "flask>=3.1.1",
     "flask-cors>=6.0.0",
-    "google-api-python-client>=2.171.0",
     "langchain>=0.3.25",
-    "marker-pdf[full]==1.7.4",
+    "markdownify>=1.2.2",
     "openai>=1.82.1",
     "peewee>=3.18.1",
     "pydantic>=2.11.5",
@@ -27,7 +26,6 @@ dependencies = [
     "tweepy>=4.15.0",
     "uvicorn>=0.27.0",
     "watchdog>=6.0.0",
-    "youtube-transcript-api>=1.0.3",
 ]
 
 [tool.ruff]
@@ -40,3 +38,8 @@ extend-select = ["I", "E501", "UP035", "PLC0415", "E402", "TID252"]
 
 [tool.ruff.lint.isort]
 force-single-line = true
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3",
+]
