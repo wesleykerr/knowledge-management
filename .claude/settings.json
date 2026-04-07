@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "input=$(cat); cmd=$(echo \"$input\" | jq -r '.tool_input.command'); if echo \"$cmd\" | grep -qE '^python[23]?( |$)'; then echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"Use uv run instead of python/python3 directly in this repo. Example: uv run pytest not python -m pytest\"}}'; fi",
+            "statusMessage": "Checking for bare python usage..."
+          }
+        ]
+      }
+    ]
+  }
+}
