@@ -47,7 +47,7 @@ models.db.initialize(db)
 
 # Generate a secure API key if it doesn't exist
 API_KEY = secret_creation.get_or_create_api_key()
-OUTPUT_DIR = "/home/wkerr/sync/Obsidian/wkerr-kg/unprocessed/"
+OUTPUT_DIR = os.path.join(os.path.expanduser("~"), "sync", "inbound")
 
 
 def generate_filename(url: str) -> str:
@@ -106,6 +106,11 @@ def add_bookmark():
         url = data["url"]
         html_content = data.get("html_content")
         screenshot = data.get("screenshot")  # This will be a base64 encoded PNG
+
+        # arxiv and youtube are handled independently; no HTML needed
+        if "arxiv.org" in url.lower() or "youtube.com" in url.lower():
+            logger.info(f"Skipping unsupported URL type: {url}")
+            return jsonify({"success": True, "skipped": True})
 
         try:
             filename = generate_filename(url)
