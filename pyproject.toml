@@ -23,6 +23,10 @@ dependencies = [
     "watchdog>=6.0.0",
 ]
 
+[project.scripts]
+knowledge-server = "knowledge.server:main"
+knowledge-listener = "knowledge.listener:main"
+
 [tool.ruff]
 line-length = 100
 preview = true
@@ -38,3 +42,10 @@ force-single-line = true
 dev = [
     "pytest>=9.0.3",
 ]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["knowledge*"]

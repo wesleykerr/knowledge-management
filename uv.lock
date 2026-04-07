@@ -598,7 +598,7 @@ sdist = { url = "https://files.pythonhosted.org/packages/1e/ce/c2bb58d00cb12d19d
 [[package]]
 name = "perpetua"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "anthropic" },
     { name = "beautifulsoup4" },
