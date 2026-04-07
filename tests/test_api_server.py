@@ -9,7 +9,7 @@ import pytest
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import api_server
+from knowledge import server as api_server
 
 
 @pytest.fixture
