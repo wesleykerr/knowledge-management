@@ -14,8 +14,8 @@ import requests
 from bs4 import BeautifulSoup
 
 # Project
-from bookmarks import constants
-from bookmarks.utils.urls import USER_AGENTS
+from knowledge import constants
+from knowledge.utils.urls import USER_AGENTS
 
 logger = logging.getLogger(__name__)
 

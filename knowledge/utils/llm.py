@@ -11,7 +11,7 @@ import pydantic
 import tiktoken
 
 # Project
-from bookmarks import models
+from knowledge import models
 
 MODEL = "gpt-4o"
 tokenizer = tiktoken.encoding_for_model("gpt-4o")

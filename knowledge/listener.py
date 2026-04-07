@@ -12,9 +12,9 @@ from watchdog import events
 from watchdog import observers
 
 # Project
-from bookmarks import models
-from bookmarks.processors import default
-from bookmarks.processors import twitter
+from knowledge import models
+from knowledge.processors import webpage
+from knowledge.processors import twitter
 
 # Configure logging
 logging.basicConfig(
@@ -39,7 +39,7 @@ def process_file(file_path: str):
         print("twitter")
         twitter.process_twitter_url(data["url"], data["html_content"], data["screenshot"])
     else:
-        default.process_url(data["url"], data["html_content"])
+        webpage.process_url(data["url"], data["html_content"])
     os.remove(file_path)
 
 

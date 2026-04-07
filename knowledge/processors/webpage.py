@@ -17,12 +17,12 @@ import pydantic
 import readabilipy
 
 # Project
-from bookmarks import constants
-from bookmarks import models
-from bookmarks.processors import base
-from bookmarks.utils import images
-from bookmarks.utils import llm
-from bookmarks.utils import urls
+from knowledge import constants
+from knowledge import models
+from knowledge.processors import base
+from knowledge.utils import images
+from knowledge.utils import llm
+from knowledge.utils import urls
 
 logger = logging.getLogger(__name__)
 

@@ -12,7 +12,7 @@ from playhouse.migrate import SchemaMigrator
 from playhouse.migrate import migrate as migrate_fn
 
 # Project
-from bookmarks import models
+from knowledge import models
 
 MIGRATIONS = []
 

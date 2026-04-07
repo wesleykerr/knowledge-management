@@ -10,7 +10,7 @@ import requests
 from bs4 import BeautifulSoup
 
 # Project
-from bookmarks import constants
+from knowledge import constants
 
 logger = logging.getLogger(__name__)
 

@@ -15,8 +15,8 @@ from flask import request
 from flask_cors import CORS
 
 # Project
-from bookmarks import models
-from bookmarks.utils import secret_creation
+from knowledge import models
+from knowledge.utils import secret_creation
 
 # Set up logging
 logging.basicConfig(
