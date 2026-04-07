@@ -9,5 +9,5 @@ Always use `uv run` to execute Python commands in this repository. Never use `py
 uv run pytest
 
 # Scripts
-uv run python bookmarks/listener.py
+uv run python knowledge/listener.py
 ```

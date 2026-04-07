@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.wkerr.knowledge-listener</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/wkerr/development/knowledge-management/scripts/run-with-env.sh</string>
+        <string>/Users/wkerr/.local/bin/uv</string>
+        <string>run</string>
+        <string>--directory</string>
+        <string>/Users/wkerr/development/knowledge-management</string>
+        <string>knowledge-listener</string>
+        <string>/Users/wkerr/sync/inbound</string>
+        <string>--prefix</string>
+        <string>data_</string>
+    </array>
+    <key>WorkingDirectory</key>
+    <string>/Users/wkerr/development/knowledge-management</string>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>/tmp/knowledge-listener.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/knowledge-listener.err</string>
+</dict>
+</plist>
