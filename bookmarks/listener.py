@@ -13,10 +13,8 @@ from watchdog import observers
 
 # Project
 from bookmarks import models
-from bookmarks.processors import arxiv
 from bookmarks.processors import default
 from bookmarks.processors import twitter
-from bookmarks.processors import youtube
 
 # Configure logging
 logging.basicConfig(
@@ -37,18 +35,11 @@ def process_file(file_path: str):
                 raise
 
     print(data["url"])
-    if arxiv.is_arxiv_url(data["url"]):
-        print("arxiv")
-        arxiv.process_arxiv_url(data["url"])
-    elif twitter.is_twitter_url(data["url"]):
+    if twitter.is_twitter_url(data["url"]):
         print("twitter")
         twitter.process_twitter_url(data["url"], data["html_content"], data["screenshot"])
-    elif youtube.is_youtube_url(data["url"]):
-        print("youtube")
-        youtube.process_youtube_url(data["url"], data["html_content"])
     else:
         default.process_url(data["url"], data["html_content"])
-    # TODO(wkerr): When we sucessfully process the file, we should delete it.
     os.remove(file_path)
 
 
