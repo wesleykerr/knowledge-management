@@ -21,6 +21,8 @@ WEB_READABILITY_PATH = os.path.join(KNOWLEDGE_BASE_PATH, "web-readability")
 WEB_READABILITY_HTML_PATH = os.path.join(KNOWLEDGE_BASE_PATH, "web-readability-html")
 WEB_SUMMARY_PATH = os.path.join(KNOWLEDGE_BASE_PATH, "web-notes")
 
+STAGED_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "staged")
+
 FOLDER_STRUCTURE = [
     "AI/DeepLearning/Architectures",
     "AI/DeepLearning/Agents",
