@@ -1,7 +1,7 @@
 # Standard Library
+import datetime
 import hashlib
 import json
-import subprocess
 from pathlib import Path
 from unittest import mock
 
@@ -31,7 +31,7 @@ def mock_images():
         yield m
 
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def mock_subprocess():
     with mock.patch("subprocess.run") as m:
         yield m
@@ -41,7 +41,7 @@ def _url_hash(url: str) -> str:
     return hashlib.sha256(url.encode()).hexdigest()
 
 
-def test_process_url_writes_staged_json(mock_subprocess, tmp_path):
+def test_process_url_writes_staged_json(tmp_path):
     from knowledge.processors import webpage
 
     url = "https://example.com/article"
@@ -62,6 +62,7 @@ def test_process_url_writes_staged_json(mock_subprocess, tmp_path):
     assert "web_page_dir" in data
     assert Path(data["web_page_dir"]).is_absolute(), "web_page_dir must be an absolute path"
     assert "staged_at" in data
+    datetime.datetime.fromisoformat(data["staged_at"])  # raises ValueError if malformed
 
 
 def test_process_url_invokes_claude_with_staged_path(mock_subprocess, tmp_path):
@@ -86,7 +87,7 @@ def test_process_url_invokes_claude_with_staged_path(mock_subprocess, tmp_path):
     assert kwargs.get("check") is True
 
 
-def test_process_url_writes_web_page_files(mock_subprocess, tmp_path):
+def test_process_url_writes_web_page_files(tmp_path):
     from knowledge.processors import webpage
 
     url = "https://example.com/article"
