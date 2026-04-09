@@ -77,9 +77,14 @@ def process_url(url: str, html_content: str = None) -> None:
     subprocess.run(
         [
             os.path.expanduser("~/.local/bin/claude"),
+            "--dangerously-skip-permissions",
+            "--allowedTools",
+            "Read,Write,Edit,Bash,Glob",
             "-p",
-            f"Process the web article staged at {staged_path} using the web-article skill",
+            f"\"Use the web-article skill to process {staged_path}\"",
         ],
+        cwd=os.path.expanduser("~/sync/Obsidian"),
+        stdin=subprocess.DEVNULL,
         check=True,
     )
     logger.info("Claude CLI completed successfully")
