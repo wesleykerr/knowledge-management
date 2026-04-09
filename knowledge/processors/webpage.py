@@ -22,31 +22,41 @@ logger = logging.getLogger(__name__)
 
 
 def process_url(url: str, html_content: str = None) -> None:
+    logger.info("Starting processing for URL: %s", url)
     os.makedirs(constants.WEB_PAGE_PATH, exist_ok=True)
 
     url_hash = llm.get_url_hash(url)
     web_page_dir = os.path.join(constants.WEB_PAGE_PATH, url_hash)
     os.makedirs(web_page_dir, exist_ok=True)
+    logger.info("URL hash: %s, web_page_dir: %s", url_hash, web_page_dir)
 
     # 1. HTML content
     if not html_content:
+        logger.info("Fetching HTML content from URL")
         html_content = urls.get_content(url)
+    else:
+        logger.info("Using provided HTML content (%d bytes)", len(html_content))
 
     with open(os.path.join(web_page_dir, "raw.html"), "w") as f:
         f.write(html_content)
+    logger.info("Saved raw HTML (%d bytes)", len(html_content))
 
     # 2. Readability extraction
+    logger.info("Running readability extraction")
     readability_obj = readabilipy.simple_json_from_html_string(html_content, use_readability=True)
     plain_content = readability_obj["plain_content"]
     readability_markdown = markdownify.markdownify(plain_content)
     with open(os.path.join(web_page_dir, "readability.md"), "w") as f:
         f.write(readability_markdown)
+    logger.info("Saved readability markdown (%d bytes)", len(readability_markdown))
 
     # 3. Full article markdown with localized images
+    logger.info("Processing article images and converting to markdown")
     processed_html = images.process_article_images(url_hash, html_content, url)
     article_markdown = markdownify.markdownify(processed_html)
     with open(os.path.join(web_page_dir, "article.md"), "w") as f:
         f.write(article_markdown)
+    logger.info("Saved article markdown (%d bytes)", len(article_markdown))
 
     # 4. Stage for Claude
     os.makedirs(constants.STAGED_PATH, exist_ok=True)
@@ -60,8 +70,10 @@ def process_url(url: str, html_content: str = None) -> None:
     }
     with open(staged_path, "w") as f:
         json.dump(staged_data, f, indent=2)
+    logger.info("Staged data written to %s", staged_path)
 
     # 5. Invoke Claude to classify, summarize, and write vault note
+    logger.info("Invoking Claude CLI for classification and note generation")
     subprocess.run(
         [
             os.path.expanduser("~/.local/bin/claude"),
@@ -70,6 +82,7 @@ def process_url(url: str, html_content: str = None) -> None:
         ],
         check=True,
     )
+    logger.info("Claude CLI completed successfully")
 
 
 @click.command()
