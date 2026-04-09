@@ -12,6 +12,7 @@ dependencies = [
     "flask-cors>=6.0.0",
     "gunicorn>=20.0.0",
     "httpx>=0.27.0",
+    "isort>=8.0.1",
     "jinja2>=3.1.0",
     "markdownify>=1.2.2",
     "peewee>=3.18.1",
@@ -35,6 +36,13 @@ extend-select = ["I", "E501", "UP035", "PLC0415", "E402", "TID252"]
 
 [tool.ruff.lint.isort]
 force-single-line = true
+
+[tool.isort]
+profile = "black"
+import_heading_stdlib = "Standard Library"
+import_heading_thirdparty = "Third Party"
+import_heading_firstparty = "Project"
+force_single_line = true
 
 [dependency-groups]
 dev = [

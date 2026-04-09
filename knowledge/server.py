@@ -5,7 +5,6 @@ import logging
 import os
 import traceback
 from functools import wraps
-from secrets import token_hex
 
 # Third Party
 import peewee
@@ -21,7 +20,7 @@ from knowledge.utils import secret_creation
 # Set up logging
 logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(funcName)s:%(lineno)d %(name)s: %(message)s [%(process)d]",
-    level=logging.WARN,
+    level=logging.WARNING,
 )
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -104,8 +103,6 @@ def add_bookmark():
             return jsonify({"error": "No URL provided"}), 400
 
         url = data["url"]
-        html_content = data.get("html_content")
-        screenshot = data.get("screenshot")  # This will be a base64 encoded PNG
 
         # arxiv and youtube are handled independently; no HTML needed
         if "arxiv.org" in url.lower() or "youtube.com" in url.lower():

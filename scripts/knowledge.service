@@ -5,9 +5,9 @@ After=network.target
 [Service]
 User=wkerr
 Group=wkerr
-WorkingDirectory=/home/wkerr/development/knowledge-management
-EnvironmentFile=/home/wkerr/development/knowledge-management/.env
-ExecStart=/home/wkerr/.local/bin/uv run --directory /home/wkerr/development/knowledge-management gunicorn --workers 3 --bind 0.0.0.0:5001 knowledge.server:app
+WorkingDirectory=/home/wkerr/knowledge-management
+EnvironmentFile=-/home/wkerr/knowledge-management/.env
+ExecStart=/home/wkerr/.local/bin/uv run --directory /home/wkerr/knowledge-management gunicorn --workers 3 --bind 0.0.0.0:5001 knowledge.server:app
 
 [Install]
 WantedBy=multi-user.target
