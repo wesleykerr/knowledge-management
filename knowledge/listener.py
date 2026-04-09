@@ -13,8 +13,8 @@ from watchdog import observers
 
 # Project
 from knowledge import models
-from knowledge.processors import webpage
 from knowledge.processors import twitter
+from knowledge.processors import webpage
 
 # Configure logging
 logging.basicConfig(

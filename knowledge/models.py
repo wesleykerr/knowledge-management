@@ -1,7 +1,6 @@
 # Standard Library
 import datetime
 import json
-import sqlite3
 
 # Third Party
 import peewee
