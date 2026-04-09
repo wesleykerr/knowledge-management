@@ -64,7 +64,7 @@ def process_url(url: str, html_content: str = None) -> None:
     # 5. Invoke Claude to classify, summarize, and write vault note
     subprocess.run(
         [
-            "claude",
+            os.path.expanduser("~/.local/bin/claude"),
             "-p",
             f"Process the web article staged at {staged_path} using the web-article skill",
         ],
